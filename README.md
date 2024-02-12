@@ -1,6 +1,3 @@
-Basat en la teva sol·licitud, aquí tens un `README.md` complet per al teu projecte "Contable", que inclou tota la informació necessària per configurar, executar, i entendre el funcionament del codi proporcionat:
-
-```markdown
 # Contable
 
 ## Descripció
