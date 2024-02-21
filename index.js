@@ -2,6 +2,8 @@ const mqtt = require('mqtt');
 const sql = require('mssql');
 require('dotenv').config();
 
+
+
 // Configuració de la connexió a la base de dades MSSQL
 const dbConfig = {
     user: process.env.DB_USER,
@@ -31,13 +33,18 @@ let estocPerLlicencia = {};
 
 // Connexió al servidor MQTT
 const client = mqtt.connect(mqttOptions);
-client.on('connect', () => {
+client.once('connect', () => {
     console.log('Connectat al servidor MQTT' ,process.env.MQTT_HOST );
-    
+    const tema = '/Impresora';
     // Subscripció al topic desitjat
     client.subscribe(process.env.MQTT_CLIENT_ID + '/Conta/#', (err) => {
+      if (!err) {
+          console.log('Subscrit al topic: ',process.env.MQTT_CLIENT_ID + '/Conta/#');
+      }
+    });
+    client.subscribe(process.env.MQTT_CLIENT_ID + tema, (err) => {
         if (!err) {
-            console.log('Subscrit al topic: ',process.env.MQTT_CLIENT_ID + '/Conta/#');
+            console.log('Subscrit al topic: ',process.env.MQTT_CLIENT_ID + tema);
         }
     });
 });
@@ -93,39 +100,116 @@ console.log('initVectorLlicencia',Llicencia)
   });
 }
 
+
+async function generaImpresionBoton1(msgJson){
+  await sql.connect(dbConfig);
+  let sqlSt =`SELECT Nom FROM impresorasip where mac = '${msgJson.mac}'`;
+  console.log(sqlSt)
+  let msg;
+  const result = await sql.query(sqlSt);
+  result.recordset.forEach(row => {
+    msg = "Nombre impresora : " + row.Nom ;
+  });
+  const message = JSON.stringify({
+    macAddress: msgJson.mac,
+    msg: msg
+  });
+  console.log('Send: ', message)
+  client.publish('/Hit/Serveis/Impresora', message)
+}
+
+async function generaImpresionBoton2(msgJson){
+  let sqlSt =`SELECT Nom FROM impresorasip where mac = '00:11:62:0e:14:9e' `;
+  let msg;
+  const result = await sql.query(sqlSt);
+  result.recordset.forEach(row => {
+    msg = "Nombre impresora : " + row.Nom ;
+  });
+  const message = JSON.stringify({
+    macAddress: msgJson.mac,
+    msg: msg
+  });
+  console.log('Send: ', message)
+  client.publish('/Hit/Serveis/Impresora', message)
+}
+
+async function generaImpresionBoton3(msgJson){
+  let sqlSt =`SELECT Nom FROM impresorasip where mac = '00:11:62:0e:14:9e' `;
+  let msg;
+  const result = await sql.query(sqlSt);
+  result.recordset.forEach(row => {
+    msg = "Nombre impresora : " + row.Nom ;
+  });
+  const message = JSON.stringify({
+    macAddress: msgJson.mac,
+    msg: msg
+  });
+  console.log('Send: ', message)
+  client.publish('/Hit/Serveis/Impresora', message)
+}
+
 // Manejador per a missatges rebuts
 client.on('message', (topic, message) => {
-    const data = JSON.parse(message.toString());
-console.log('message',topic,data)
-    // Comprovar si 'data' té la propietat 'Articles' i que és una array
-    if (data.Articles && Array.isArray(data.Articles)) {
-        if (!estocPerLlicencia[data.Llicencia]) {
-            estocPerLlicencia[data.Llicencia] = {};
-            initVectorLlicencia(data.Llicencia);
-        }
-
-        data.Articles.forEach(article => {
-            if (estocPerLlicencia[data.Llicencia][article.CodiArticle]) {
-                estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsVenudes  += article.Quantitat;
-                estocPerLlicencia[data.Llicencia][article.CodiArticle].estoc =  
-                            estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsServides
-                            -estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsVenudes
-                            -estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsEncarregades;
-                estocPerLlicencia[data.Llicencia][article.CodiArticle].ultimaActualitzacio = new Date().toISOString();
-                // Enviar missatge MQTT amb l'actualització de la quantitat
-                client.publish(process.env.MQTT_CLIENT_ID + '/Estock/' + data.Llicencia, JSON.stringify({
-                    Llicencia: data.Llicencia,
-                    CodiArticle: article.CodiArticle,
-                    EstocActualitzat: estocPerLlicencia[data.Llicencia][article.CodiArticle].estoc
-                }));
-            }else{
-                client.publish(process.env.MQTT_CLIENT_ID + '/Estock/' + data.Llicencia, 'No revisem aquest article');
-            }
-        });
-    } else {
-        console.log('El missatge rebut no té l estructura esperada o la propietat "Articles" no és una array');
-    }
+  if (topic == process.env.MQTT_CLIENT_ID + '/Impresora') atiendeMensajeImpresora(message) 
+  if (topic == process.env.MQTT_CLIENT_ID + '/Calcul') atendeMensajeCalculo(message) 
 });
+
+function atiendeMensajeImpresora(message) {
+  //mqtt envia "macAddress:mac, msg:informe preparado"
+  let msg = '';
+  try {
+    const msgJson = JSON.parse(message);
+    console.log('Mensaje en modo JSON:', msgJson);
+    switch (msgJson.msg) {
+      case 'ImpresoraIpReposicion':
+        generaImpresionBoton1(msgJson);
+        break;
+      case 'ImpresoraPremutBoto2':
+        //generaImpresionBoton2(msgJson);
+        break;
+      case 'ImpresoraPremutBoto3':
+        //generaImpresionBoton3(msgJson);
+        break;
+      default:
+        break;
+    }
+    
+  } catch (error) {
+    console.log('Mensaje recibido como una cadena');
+  }
+}
+
+function atendeMensajeCalculo(message) {
+  const data = JSON.parse(message.toString());
+  console.log('message', topic, data);
+  // Comprobar si 'data' tiene la propiedad 'Articles' y que es un array
+  if (data.Articles && Array.isArray(data.Articles)) {
+    if (!estocPerLlicencia[data.Llicencia]) {
+        estocPerLlicencia[data.Llicencia] = {};
+        initVectorLlicencia(data.Llicencia);
+    }
+      data.Articles.forEach(article => {
+        if (estocPerLlicencia[data.Llicencia][article.CodiArticle]) {
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsVenudes += article.Quantitat;
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].estoc =
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsServides -
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsVenudes -
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].unitatsEncarregades;
+            estocPerLlicencia[data.Llicencia][article.CodiArticle].ultimaActualitzacio = new Date().toISOString();
+            // Enviar mensaje MQTT con la actualización de la cantidad
+            client.publish(process.env.MQTT_CLIENT_ID + '/Estock/' + data.Llicencia, JSON.stringify({
+              Llicencia: data.Llicencia,
+              CodiArticle: article.CodiArticle,
+              EstocActualitzat: estocPerLlicencia[data.Llicencia][article.CodiArticle].estoc
+            }));
+        } else {
+          client.publish(process.env.MQTT_CLIENT_ID + '/Estock/' + data.Llicencia, 'No revisamos este artículo');
+        }
+      });
+  } else {
+      console.log('El mensaje recibido no tiene la estructura esperada o la propiedad "Articles" no es un array');
+  }
+}
 
 // Mantenir el programa en execució
 process.stdin.resume();
