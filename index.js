@@ -103,17 +103,41 @@ console.log('initVectorLlicencia',Llicencia)
 
 async function generaImpresionBoton1(msgJson){
   await sql.connect(dbConfig);
-  let sqlSt =`SELECT Nom FROM impresorasip where mac = '${msgJson.mac}'`;
-  console.log(sqlSt)
+  let numero = 0;
   let msg;
-  const result = await sql.query(sqlSt);
+  let sqlSt1 =`use hit select * FROM impresorasip where mac = '${msgJson.mac}'`;
+  let sqlSt2 =`use fac_demo select * FROM clients where codi = `;
+  
+  console.log('sql 1:', sqlSt1)
+  const result = await sql.query(sqlSt1);
   result.recordset.forEach(row => {
-    msg = "Nombre impresora : " + row.Nom ;
+    msg = "Nombre impresora : " + row.Nom + " | Nombre Empresora : " + row.Empresa;
+    let partes = row.Nom.split('_');
+    numero = partes[1];
+    
   });
+  numero = 904; //testeo
+  sqlSt2 += numero;
+  console.log('sql 2:', sqlSt2)
+  const result2 = await sql.query(sqlSt2);
+  result2.recordset.forEach(row => {
+    msg+= "\n"+row.Nom;
+    msg+= "\n"+msgJson.time;
+    
+  });
+  msg+= "\n"+'***************************************';
+  let sqlSt3 =`use fac_demo select sum(quantitat ) q , a.nom  from [v_venut_2024-01] v join articles a on a.codi = v.plu  where botiga = '${numero}' and day(data) = 2 group by a.nom `;
+  console.log('sql 3:', sqlSt3)
+  const result3 = await sql.query(sqlSt3);
+  result3.recordset.forEach(row => {
+    msg+= "\n"+row.q + ':' + row.nom;
+  });
+  msg+= "\n"+'***************************************';
   const message = JSON.stringify({
     macAddress: msgJson.mac,
     msg: msg
   });
+  console.log(msg)
   console.log('Send: ', message)
   client.publish('/Hit/Serveis/Impresora', message)
 }
