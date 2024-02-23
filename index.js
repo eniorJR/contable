@@ -107,11 +107,21 @@ async function generaImpresionBoton1(msgJson){
   let msg;
   let sqlSt1 =`use hit select * FROM impresorasip where mac = '${msgJson.mac}'`;
   let sqlSt2 =`use fac_demo select * FROM clients where codi = `;
-  
+  var fechaActual = new Date();
+
+  // Obtener el nombre del día de la semana
+  var diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  var diaSemana = diasSemana[fechaActual.getDay()];
+
+  // Formatear la fecha en el formato deseado
+  var dia = ("0" + fechaActual.getDate()).slice(-2);
+  var mes = ("0" + (fechaActual.getMonth() + 1)).slice(-2);
+  var anio = fechaActual.getFullYear().toString().slice(-2);
+  var fechaFormateada = diaSemana + " " + dia + "-" + mes + "-" + anio;
   console.log('sql 1:', sqlSt1)
   const result = await sql.query(sqlSt1);
   result.recordset.forEach(row => {
-    msg = "Nombre impresora : " + row.Nom + " | Nombre Empresora : " + row.Empresa;
+    msg = "Nombre impresora : " + row.Nom + "\nNombre Empresa : " + row.Empresa;
     let partes = row.Nom.split('_');
     numero = partes[1];
     
@@ -122,17 +132,17 @@ async function generaImpresionBoton1(msgJson){
   const result2 = await sql.query(sqlSt2);
   result2.recordset.forEach(row => {
     msg+= "\n"+row.Nom;
-    msg+= "\n"+msgJson.time;
+    msg+= "\n"+fechaFormateada;
     
   });
-  msg+= "\n"+'***************************************';
+  msg+= "\n"+'********************************************';
   let sqlSt3 =`use fac_demo select sum(quantitat ) q , a.nom  from [v_venut_2024-01] v join articles a on a.codi = v.plu  where botiga = '${numero}' and day(data) = 2 group by a.nom `;
   console.log('sql 3:', sqlSt3)
   const result3 = await sql.query(sqlSt3);
   result3.recordset.forEach(row => {
     msg+= "\n"+row.q + ':' + row.nom;
   });
-  msg+= "\n"+'***************************************';
+  msg+= "\n"+'********************************************';
   const message = JSON.stringify({
     macAddress: msgJson.mac,
     msg: msg
