@@ -2,7 +2,7 @@ FROM node
 
 WORKDIR /usr/src
 
-COPY ["package.json", "package-lock.json",  "/usr/src"]
+COPY ["package.json", "package-lock.json",  "/usr/src/"]
 
 RUN npm install
 
