@@ -1,5 +1,8 @@
 # Contable
-![Logo del Proyecto](Contable.png)
+<p align="Left">
+  <img src="Contable.png" alt="logo" width="300" height="300">
+</p>
+
 ## Descripció
 El projecte Contable és una solució programada en Node.js que interactua amb un servidor MQTT per processar transaccions d'articles especificades en missatges JSON. A més, aquest projecte interactua amb una base de dades MSSQL per sincronitzar l'estoc basant-se en les dades rebudes. L'objectiu principal és actualitzar l'estoc en memòria basant-se en transaccions i respondre amb l'estat actualitzat de l'estoc a través de missatges MQTT.
 
