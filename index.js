@@ -94,7 +94,7 @@ async function initVectorLlicencia(Llicencia,Empresa) {
     
   let sqlSt = ""
   let LlicenciaA = Llicencia;
-  LlicenciaA =   819; // T91 per proves 
+  if (process.env.NODE_ENV === 'Dsv') LlicenciaA =   819; // T91 per proves 
   const anyActual = avui.getFullYear();
   const mesActual = avui.getMonth(); // Mes actual (0-indexat)
   const diesDelMes = new Date(anyActual, mesActual + 1, 0).getDate(); // Correcte: obté el darrer dia del mes
