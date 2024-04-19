@@ -318,44 +318,46 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       end`;
     //console.log(sqlSt);
     result2 = await sql.query(sqlSt);
-
-    result2.recordset.forEach((row) => {
-      historicArrayNew = [];
-      unitatsVenudesNew = row.SumaAvui;
-      unitatsVenudes7dNew = row.Minut < minutCalcul ? row.SumaPast : 0;
-      objectiuNew = unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
-
-      if (estocPerLlicencia[Llicencia]["IndicadorVenut"]) {
-        historicArrayNew =
-          estocPerLlicencia[Llicencia]["IndicadorVenut"].historic;
-        unitatsVenudesNew =
-          estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes +
-          unitatsVenudesNew;
-        unitatsVenudes7dNew =
-          estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes7d +
-          unitatsVenudes7dNew;
+    if (result2 && result2.recordset) {
+      result2.recordset.forEach((row) => {
+        historicArrayNew = [];
+        unitatsVenudesNew = row.SumaAvui;
+        unitatsVenudes7dNew = row.Minut < minutCalcul ? row.SumaPast : 0;
         objectiuNew =
-          estocPerLlicencia[Llicencia]["IndicadorVenut"].objectiu + objectiuNew;
-      }
+          unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
 
-      estocPerLlicencia[Llicencia]["IndicadorVenut"] = {
-        actiu: true,
-        tipus: "IndicadorVenut",
-        articleCodi: "IndicadorVenut",
-        ultimMissatge: "",
-        historic: historicArrayNew.concat({
-          Minut: row.Minut,
-          objectiu: row.Objectiu,
-          SumaAvui: row.SumaAvui,
-          SumaPast: row.SumaPast,
-        }),
-        unitatsVenudes: unitatsVenudesNew,
-        unitatsVenudes7d: unitatsVenudes7dNew,
-        objectiu: objectiuNew,
-        minutCalcul: minutCalcul,
-      };
-    });
+        if (estocPerLlicencia[Llicencia]["IndicadorVenut"]) {
+          historicArrayNew =
+            estocPerLlicencia[Llicencia]["IndicadorVenut"].historic;
+          unitatsVenudesNew =
+            estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes +
+            unitatsVenudesNew;
+          unitatsVenudes7dNew =
+            estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes7d +
+            unitatsVenudes7dNew;
+          objectiuNew =
+            estocPerLlicencia[Llicencia]["IndicadorVenut"].objectiu +
+            objectiuNew;
+        }
 
+        estocPerLlicencia[Llicencia]["IndicadorVenut"] = {
+          actiu: true,
+          tipus: "IndicadorVenut",
+          articleCodi: "IndicadorVenut",
+          ultimMissatge: "",
+          historic: historicArrayNew.concat({
+            Minut: row.Minut,
+            objectiu: row.Objectiu,
+            SumaAvui: row.SumaAvui,
+            SumaPast: row.SumaPast,
+          }),
+          unitatsVenudes: unitatsVenudesNew,
+          unitatsVenudes7d: unitatsVenudes7dNew,
+          objectiu: objectiuNew,
+          minutCalcul: minutCalcul,
+        };
+      });
+    }
     return;
   } catch (error) {
     console.error(error);
@@ -447,9 +449,8 @@ async function revisarEstoc(data) {
           */
           let carasInc = ["", "😃", "🍒", "🤢"];
           console.log(dif);
-          if (dif >= 2)
-            missatge =
-              carasInc[0]; // Molt bé, supera l'objectiu per 2 o més unitats
+          if (dif >= 2) missatge = carasInc[0];
+          // Molt bé, supera l'objectiu per 2 o més unitats
           else if (dif === 1)
             missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
           else if (dif === 0) missatge = carasInc[1];
@@ -531,9 +532,8 @@ async function revisarEstoc(data) {
             "🤬",
             "🤢",
           ];
-          if (dif >= 2)
-            missatge =
-              carasInc[0]; // Molt bé, supera l'objectiu per 2 o més unitats
+          if (dif >= 2) missatge = carasInc[0];
+          // Molt bé, supera l'objectiu per 2 o més unitats
           else if (dif === 1)
             missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
           else if (dif === 0) missatge = carasInc[2];
