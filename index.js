@@ -26,10 +26,6 @@ sql.connect(dbConfig);
 const mqttOptions = {
   host: process.env.MQTT_HOST,
   port: process.env.MQTT_PORT,
-  clientId:
-    process.env.NODE_ENV === "Dsv"
-      ? `${process.env.MQTT_CLIENT_ID}-Dsv`
-      : process.env.MQTT_CLIENT_ID,
   username: process.env.MQTT_USER,
   password: process.env.MQTT_PASSWORD,
 };
@@ -114,7 +110,7 @@ async function initVectorLlicencia(Llicencia, Empresa) {
     const mesActual = avui.getMonth(); // Mes actual (0-indexat)
     const diesDelMes = new Date(anyActual, mesActual + 1, 0).getDate(); // Correcte: obté el darrer dia del mes
     const minutCalcul = avui.getHours() * 60 + Math.floor(avui.getMinutes()); // Calcula el minut actual (0-47)
-    console.log("Recarreguem !!!!!!!!!!!!!!!!!!!");
+    console.log("Recarreguem !!!!!!!!!!!!!!!!!!!",minutCalcul);
     estocPerLlicencia[Llicencia] = {};
     estocPerLlicencia[Llicencia] = estocPerLlicencia[Llicencia] || {};
     estocPerLlicencia[Llicencia]["LastUpdate"] = new Date().toISOString(); // Estableix o actualitza la data d'última actualització
@@ -152,7 +148,6 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       };
     });
   }
-
 
   const lastWeekSameDay = moment().subtract(7, 'days').format('YYYY-MM-DD'); // Mateix dia de la setmana, setmana passada
   let lastWeekSameDayDia = moment().subtract(7, 'days').date();
@@ -247,7 +242,6 @@ async function initVectorLlicencia(Llicencia, Empresa) {
         ultimMissatge: "",
         historic: historicArrayNew.concat({
           Minut: row.Minut,
-          objectiu: row.Objectiu,
           SumaAvui: row.SumaAvui,
           SumaPast: row.SumaPast,
         }),
@@ -373,7 +367,7 @@ async function revisarEstoc(data) {
       await initVectorLlicencia(data.Llicencia, data.Empresa);
       const minutCalcul =
         new Date().getHours() * 60 + Math.floor(new Date().getMinutes()); // Calcula el minut actual (0-47)
-
+      let missatge = ""
       data.Articles.forEach((article) => {
         const articleData =
           estocPerLlicencia[data.Llicencia][article.CodiArticle];
@@ -406,6 +400,7 @@ async function revisarEstoc(data) {
 
       // The following part assumes estocPerLlicencia[data.Llicencia] is an array, which might not be the case
       Object.values(estocPerLlicencia[data.Llicencia]).forEach((controlat) => {
+if (process.env.NODE_ENV === "Dsv") console.log(controlat);
         if (controlat.tipus === "Compromisos") {
           // Actualitzem compromis
           controlat.historic.forEach((historic) => {
@@ -420,7 +415,7 @@ async function revisarEstoc(data) {
             }
           });
 
-          let missatge = ""; // Creem el missatge
+          missatge = ""; // Creem el missatge
           if (
             parseFloat(controlat.unitatsVenudes) <
             parseFloat(controlat.objectiu)
@@ -503,7 +498,7 @@ async function revisarEstoc(data) {
             }
           });
 
-          let missatge = ""; // Creem el missatge
+          missatge = ""; // Creem el missatge
           if (
             parseFloat(controlat.unitatsVenudes) <
             parseFloat(controlat.unitatsVenudes7d)
@@ -560,6 +555,7 @@ async function revisarEstoc(data) {
             );
           }
         }
+if (process.env.NODE_ENV === "Dsv") console.log(missatge);        
       });
     } catch (error) {
       console.error("Error handling stock: ", error);
