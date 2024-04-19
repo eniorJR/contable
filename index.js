@@ -234,16 +234,10 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       objectiuNew = unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
 
       if (estocPerLlicencia[Llicencia][row.CodiArticle]) {
-        historicArrayNew =
-          estocPerLlicencia[Llicencia][row.CodiArticle].historic;
-        unitatsVenudesNew =
-          estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes +
-          unitatsVenudesNew;
-        unitatsVenudes7dNew =
-          estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes7d +
-          unitatsVenudes7dNew;
-        objectiuNew =
-          estocPerLlicencia[Llicencia][row.CodiArticle].objectiu + objectiuNew;
+        if(estocPerLlicencia[Llicencia][row.CodiArticle].historic) historicArrayNew = estocPerLlicencia[Llicencia][row.CodiArticle].historic;
+        if(estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes) unitatsVenudesNew = estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes + unitatsVenudesNew;
+        if(estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes7d) unitatsVenudes7dNew = estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes7d + unitatsVenudes7dNew;
+        if(estocPerLlicencia[Llicencia][row.CodiArticle].objectiu) objectiuNew = estocPerLlicencia[Llicencia][row.CodiArticle].objectiu + objectiuNew;
       }
 
       estocPerLlicencia[Llicencia][row.CodiArticle] = {
