@@ -115,7 +115,7 @@ async function initVectorLlicencia(Llicencia, Empresa) {
     estocPerLlicencia[Llicencia] = estocPerLlicencia[Llicencia] || {};
     estocPerLlicencia[Llicencia]["LastUpdate"] = new Date().toISOString(); // Estableix o actualitza la data d'última actualització
 
-    if (Empresa == "Fac_Camps" || Empresa == "Fac_Tena") {
+    if (Empresa == "Fac_Camps") {
       for (let dia = 1; dia <= diesDelMes; dia++) {
         let d = new Date(avui.getFullYear(), avui.getMonth(), dia);
         if (sqlSt != "") sqlSt += " union ";
@@ -141,9 +141,9 @@ async function initVectorLlicencia(Llicencia, Empresa) {
         ultimMissatge: "",  
         estoc: (row.UnitatsServides - row.UnitatsVenudes - row.unitatsEncarregades),
         tipus: 'Encarrecs',
-        unitatsVenudes: row.UnitatsVenudes,
-        unitatsServides: row.UnitatsServides,
-        unitatsEncarregades: row.unitatsEncarregades,
+        unitatsVenudes: parseFloat(row.UnitatsVenudes),
+        unitatsServides: parseFloat(row.UnitatsServides),
+        unitatsEncarregades: parseFloat(row.unitatsEncarregades),
         ultimaActualitzacio: new Date().toISOString()
       };
     });
@@ -224,8 +224,8 @@ async function initVectorLlicencia(Llicencia, Empresa) {
   result2 = await sql.query(sqlSt);
   result2.recordset.forEach(row => {
       historicArrayNew = [];
-      unitatsVenudesNew = row.SumaAvui;
-      unitatsVenudes7dNew = row.Minut < minutCalcul ? row.SumaPast : 0;
+      unitatsVenudesNew = parseFloat(row.SumaAvui);
+      unitatsVenudes7dNew = row.Minut < minutCalcul ? parseFloat(row.SumaPast) : 0;
       objectiuNew = unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
 
       if (estocPerLlicencia[Llicencia][row.CodiArticle]) {
@@ -245,8 +245,8 @@ async function initVectorLlicencia(Llicencia, Empresa) {
           SumaAvui: row.SumaAvui,
           SumaPast: row.SumaPast,
         }),
-        unitatsVenudes: unitatsVenudesNew,
-        unitatsVenudes7d: unitatsVenudes7dNew,
+        unitatsVenudes: parseFloat(unitatsVenudesNew),
+        unitatsVenudes7d: parseFloat(unitatsVenudes7dNew),
         objectiu: objectiuNew,
         minutCalcul: minutCalcul,
       };
@@ -314,8 +314,8 @@ async function initVectorLlicencia(Llicencia, Empresa) {
     if (result2 && result2.recordset) {
       result2.recordset.forEach((row) => {
         historicArrayNew = [];
-        unitatsVenudesNew = row.SumaAvui;
-        unitatsVenudes7dNew = row.Minut < minutCalcul ? row.SumaPast : 0;
+        unitatsVenudesNew = parseFloat(row.SumaAvui);
+        unitatsVenudes7dNew = row.Minut < minutCalcul ? parseFloat(row.SumaPast) : 0;
         objectiuNew =
           unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
 
@@ -324,13 +324,13 @@ async function initVectorLlicencia(Llicencia, Empresa) {
             estocPerLlicencia[Llicencia]["IndicadorVenut"].historic;
           unitatsVenudesNew =
             estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes +
-            unitatsVenudesNew;
+            parseFloat(unitatsVenudesNew);
           unitatsVenudes7dNew =
             estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes7d +
-            unitatsVenudes7dNew;
+            parseFloat(unitatsVenudes7dNew);
           objectiuNew =
             estocPerLlicencia[Llicencia]["IndicadorVenut"].objectiu +
-            objectiuNew;
+            parseFloat(objectiuNew);
         }
 
         estocPerLlicencia[Llicencia]["IndicadorVenut"] = {
@@ -344,8 +344,8 @@ async function initVectorLlicencia(Llicencia, Empresa) {
             SumaAvui: row.SumaAvui,
             SumaPast: row.SumaPast,
           }),
-          unitatsVenudes: unitatsVenudesNew,
-          unitatsVenudes7d: unitatsVenudes7dNew,
+          unitatsVenudes: parseFloat(unitatsVenudesNew),
+          unitatsVenudes7d: parseFloat(unitatsVenudes7dNew),
           objectiu: objectiuNew,
           minutCalcul: minutCalcul,
         };
@@ -375,13 +375,13 @@ async function revisarEstoc(data) {
           // Update the units sold and handle floating-point arithmetic correctly
           const quantitat = parseFloat(article.Quantitat);
           const unitatsVenudes = parseFloat(articleData.unitatsVenudes);
-          articleData.unitatsVenudes = (quantitat + unitatsVenudes).toFixed(3);
+          articleData.unitatsVenudes = parseFloat((quantitat + unitatsVenudes).toFixed(3))
 
           if (articleData.tipus === "Encarrecs") {
             articleData.estoc =
-              articleData.unitatsServides -
-              articleData.unitatsVenudes -
-              articleData.unitatsEncarregades;
+              parseFloat(articleData.unitatsServides) -
+              parseFloat(articleData.unitatsVenudes) -
+              parseFloat(articleData.unitatsEncarregades);
             articleData.ultimaActualitzacio = new Date().toISOString();
 
             client.publish(
@@ -410,7 +410,7 @@ if (process.env.NODE_ENV === "Dsv") console.log(controlat);
               minutCalcul > controlat.minutCalcul
             ) {
               controlat.unitatsVenudes7d =
-                controlat.unitatsVenudes7d + parseFloat(historic.SumaPast);
+              parseFloat(controlat.unitatsVenudes7d) + parseFloat(historic.SumaPast);
               controlat.minutCalcul = historic.Minut;
             }
           });
@@ -442,7 +442,7 @@ if (process.env.NODE_ENV === "Dsv") console.log(controlat);
                                  else if (dif === -9) missatge = carasInc[11]; 
           */
           let carasInc = ["", "😃", "🍒", "🤢"];
-          console.log(dif);
+if (process.env.NODE_ENV === "Dsv") console.log('Diferencia : ',dif);
           if (dif >= 2) missatge = carasInc[0];
           // Molt bé, supera l'objectiu per 2 o més unitats
           else if (dif === 1)
@@ -497,7 +497,7 @@ if (process.env.NODE_ENV === "Dsv") console.log(controlat);
               controlat.minutCalcul = historic.Minut;
             }
           });
-
+if (process.env.NODE_ENV === "Dsv") console.log('Venut ', controlat.unitatsVenudes, 'Venut 7d ', controlat.unitatsVenudes7d);
           missatge = ""; // Creem el missatge
           if (
             parseFloat(controlat.unitatsVenudes) <
