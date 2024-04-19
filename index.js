@@ -133,6 +133,8 @@ console.log('Recarreguem !!!!!!!!!!!!!!!!!!!');
       };
     });
   }
+
+
   const lastWeekSameDay = moment().subtract(7, 'days').format('YYYY-MM-DD'); // Mateix dia de la setmana, setmana passada
   let lastWeekSameDayDia = moment().subtract(7, 'days').date();
   let historicArrayNew = [];
@@ -140,7 +142,10 @@ console.log('Recarreguem !!!!!!!!!!!!!!!!!!!');
   let unitatsVenudesNew = 0;
   let unitatsVenudes7dNew = 0;
 
-  sqlSt=`use ${Empresa} SELECT 
+  sqlSt=`use ${Empresa} 
+      IF EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaCompromiso(avui)}') And EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaVenut(avui)}') And EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaVenut(new Date(lastWeekSameDay))}')     
+      BEGIN   
+         SELECT 
          plu as CodiArticle,
          objectiu as Objectiu,
          Min*30 as Minut,
@@ -191,7 +196,8 @@ console.log('Recarreguem !!!!!!!!!!!!!!!!!!!');
          ORDER BY 
          plu,
          objectiu,
-        Min;`;
+        Min 
+      END `;
 //console.log(sqlSt);          
   result2 = await sql.query(sqlSt);
   result2.recordset.forEach(row => {
@@ -234,8 +240,11 @@ console.log('Recarreguem !!!!!!!!!!!!!!!!!!!');
            Param3 nvarchar(255),
            Param4 nvarchar(255),
            Param5 nvarchar(255)
-         );
-         END;
+         )
+         END `
+  sqlSt=`use ${Empresa} 
+         IF EXISTS (SELECT * FROM sys.tables WHERE name = 'IndicadorsBotiga')      
+         BEGIN   
          if (Select count(*) from IndicadorsBotiga Where Botiga = ${Llicencia} and Actiu = '1' and Tipus = 'IndicadorVenut') > 0
          begin
          select 
@@ -267,8 +276,9 @@ console.log('Recarreguem !!!!!!!!!!!!!!!!!!!');
                GROUP BY 
                Min 
                ORDER BY 
-              Min;
-      end`;
+              Min
+          end    
+         END`;
 //console.log(sqlSt);          
     result2 = await sql.query(sqlSt);
 
