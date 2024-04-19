@@ -163,7 +163,7 @@ async function initVectorLlicencia(Llicencia, Empresa) {
     let objectiuNew = 0;
     let unitatsVenudesNew = 0;
     let unitatsVenudes7dNew = 0;
-    if (Empresa == "Fac_Camps") return;
+
     sqlSt = `use ${Empresa} SELECT 
          plu as CodiArticle,
          objectiu as Objectiu,
