@@ -119,9 +119,9 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       for (let dia = 1; dia <= diesDelMes; dia++) {
         let d = new Date(avui.getFullYear(), avui.getMonth(), dia);
         if (sqlSt != "") sqlSt += " union ";
-        sqlSt += `select CodiArticle as Article,sum(Quantitatservida) as s ,0 as v,0 as e from  [${nomTaulaServit(
+        sqlSt += `select codiArticle as Article,sum(Quantitatservida) as s ,0 as v,0 as e from  [${nomTaulaServit(
           d
-        )}] where client = ${Llicencia} and quantitatservida>0 group by codiarticle
+        )}] where client = ${Llicencia} and quantitatservida>0 group by codiArticle
             union
             select plu as Article ,0 as s ,sum(quantitat) as v , 0 as  e  from  [${nomTaulaVenut(
               d
@@ -129,15 +129,15 @@ async function initVectorLlicencia(Llicencia, Empresa) {
             union
             select Article as Article ,0 as s , 0 aS V , quantitat AS e  from  [${nomTaulaEncarregs(d)}] where botiga = ${Llicencia} and day(data) = ${dia} and estat = 0 `
     };
-    sqlSt = `use ${Empresa} select Article as CodiArticle,isnull(sum(s),0) as UnitatsServides,isnull(Sum(v),0) as UnitatsVenudes, isnull(Sum(e),0) As unitatsEncarregades  from ( ` + sqlSt;
+    sqlSt = `use ${Empresa} select Article as codiArticle,isnull(sum(s),0) as UnitatsServides,isnull(Sum(v),0) as UnitatsVenudes, isnull(Sum(e),0) As unitatsEncarregades  from ( ` + sqlSt;
     sqlSt += ` ) t group by Article `;
   //console.log(sqlSt);
     sql.connect(dbConfig); // Assegura't que això es tracta com una promesa.
     result = await sql.query(sqlSt);
     result.recordset.forEach(row => {
-      estocPerLlicencia[Llicencia][row.CodiArticle] = {
+      estocPerLlicencia[Llicencia][row.codiArticle] = {
         actiu: true,
-        articleCodi: row.CodiArticle,
+        articleCodi: row.codiArticle,
         ultimMissatge: "",  
         estoc: (row.UnitatsServides - row.UnitatsVenudes - row.unitatsEncarregades),
         tipus: 'Encarrecs',
@@ -160,7 +160,7 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       IF EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaCompromiso(avui)}') And EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaVenut(avui)}') And EXISTS (SELECT * FROM sys.tables WHERE name = '${nomTaulaVenut(new Date(lastWeekSameDay))}')     
       BEGIN   
          SELECT 
-         plu as CodiArticle,
+         plu as codiArticle,
          objectiu as Objectiu,
          Min*30 as Minut,
          SUM(CASE WHEN T = 'Avui' THEN quantitat ELSE 0 END) AS SumaAvui,
@@ -228,17 +228,17 @@ async function initVectorLlicencia(Llicencia, Empresa) {
       unitatsVenudes7dNew = row.Minut < minutCalcul ? parseFloat(row.SumaPast) : 0;
       objectiuNew = unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
 
-      if (estocPerLlicencia[Llicencia][row.CodiArticle]) {
-        if(estocPerLlicencia[Llicencia][row.CodiArticle].historic) historicArrayNew = estocPerLlicencia[Llicencia][row.CodiArticle].historic;
-        if(estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes) unitatsVenudesNew = estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes + unitatsVenudesNew;
-        if(estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes7d) unitatsVenudes7dNew = estocPerLlicencia[Llicencia][row.CodiArticle].unitatsVenudes7d + unitatsVenudes7dNew;
-        if(estocPerLlicencia[Llicencia][row.CodiArticle].objectiu) objectiuNew = estocPerLlicencia[Llicencia][row.CodiArticle].objectiu + objectiuNew;
+      if (estocPerLlicencia[Llicencia][row.codiArticle]) {
+        if(estocPerLlicencia[Llicencia][row.codiArticle].historic) historicArrayNew = estocPerLlicencia[Llicencia][row.codiArticle].historic;
+        if(estocPerLlicencia[Llicencia][row.codiArticle].unitatsVenudes) unitatsVenudesNew = estocPerLlicencia[Llicencia][row.codiArticle].unitatsVenudes + unitatsVenudesNew;
+        if(estocPerLlicencia[Llicencia][row.codiArticle].unitatsVenudes7d) unitatsVenudes7dNew = estocPerLlicencia[Llicencia][row.codiArticle].unitatsVenudes7d + unitatsVenudes7dNew;
+        if(estocPerLlicencia[Llicencia][row.codiArticle].objectiu) objectiuNew = estocPerLlicencia[Llicencia][row.codiArticle].objectiu + objectiuNew;
       }
 
-      estocPerLlicencia[Llicencia][row.CodiArticle] = {
+      estocPerLlicencia[Llicencia][row.codiArticle] = {
         actiu: true,
         tipus: "Compromisos",
-        articleCodi: row.CodiArticle,
+        articleCodi: row.codiArticle,
         ultimMissatge: "",
         historic: historicArrayNew.concat({
           Minut: row.Minut,
@@ -268,10 +268,11 @@ async function initVectorLlicencia(Llicencia, Empresa) {
            Param5 nvarchar(255)
          )
          END `
+  let tipus = 'IndicadorVenut';       
   sqlSt=`use ${Empresa} 
          IF EXISTS (SELECT * FROM sys.tables WHERE name = 'IndicadorsBotiga')      
          BEGIN   
-         if (Select count(*) from IndicadorsBotiga Where Botiga = ${Llicencia} and Actiu = '1' and Tipus = 'IndicadorVenut') > 0
+         if (Select count(*) from IndicadorsBotiga Where Botiga = ${Llicencia} and Actiu = '1' and Tipus = '${tipus}') > 0
          begin
          select 
                Min*30 as Minut,
@@ -314,44 +315,31 @@ async function initVectorLlicencia(Llicencia, Empresa) {
     if (result2 && result2.recordset) {
       result2.recordset.forEach((row) => {
         historicArrayNew = [];
-        unitatsVenudesNew = parseFloat(row.SumaAvui);
-        unitatsVenudes7dNew = row.Minut < minutCalcul ? parseFloat(row.SumaPast) : 0;
-        objectiuNew =
-          unitatsVenudes7dNew * (1 + parseFloat(row.Objectiu) / 100);
+        importVenutNew = parseFloat(row.SumaAvui);
+        importVenut7dNew = row.Minut < minutCalcul ? parseFloat(row.SumaPast) : 0;
 
-        if (estocPerLlicencia[Llicencia]["IndicadorVenut"]) {
-          historicArrayNew =
-            estocPerLlicencia[Llicencia]["IndicadorVenut"].historic;
-          unitatsVenudesNew =
-            estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes +
-            parseFloat(unitatsVenudesNew);
-          unitatsVenudes7dNew =
-            estocPerLlicencia[Llicencia]["IndicadorVenut"].unitatsVenudes7d +
-            parseFloat(unitatsVenudes7dNew);
-          objectiuNew =
-            estocPerLlicencia[Llicencia]["IndicadorVenut"].objectiu +
-            parseFloat(objectiuNew);
+        if (estocPerLlicencia[Llicencia][tipus]) {
+          historicArrayNew    = estocPerLlicencia[Llicencia][tipus].historic;
+          importVenutVenutNew = estocPerLlicencia[Llicencia][tipus].importVenut + parseFloat(importVenutNew);
+          importVenut7dNew    = estocPerLlicencia[Llicencia][tipus].importVenut7d + parseFloat(importVenut7dNew);
         }
 
-        estocPerLlicencia[Llicencia]["IndicadorVenut"] = {
+        estocPerLlicencia[Llicencia][tipus] = {
           actiu: true,
-          tipus: "IndicadorVenut",
-          articleCodi: "IndicadorVenut",
+          tipus: tipus,
+          articleCodi: tipus,
           ultimMissatge: "",
           historic: historicArrayNew.concat({
             Minut: row.Minut,
-            objectiu: row.Objectiu,
             SumaAvui: row.SumaAvui,
             SumaPast: row.SumaPast,
           }),
-          unitatsVenudes: parseFloat(unitatsVenudesNew),
-          unitatsVenudes7d: parseFloat(unitatsVenudes7dNew),
-          objectiu: objectiuNew,
+          importVenut: parseFloat(importVenutNew),
+          importVenut7d: parseFloat(importVenut7dNew),
           minutCalcul: minutCalcul,
         };
       });
     }
-    return;
   } catch (error) {
     console.error(error);
     // Gestiona l'error o llança'l de nou si és necessari.
@@ -362,199 +350,109 @@ async function initVectorLlicencia(Llicencia, Empresa) {
 // Quan es rep un missatge MQTT
 async function revisarEstoc(data) {
   // Comprovar si 'data' té la propietat 'Articles' i que és una array
+  let ImportTotalTicket = 0;
   if (data && data.Articles && Array.isArray(data.Articles)) {
     try {
       await initVectorLlicencia(data.Llicencia, data.Empresa);
-      const minutCalcul =
-        new Date().getHours() * 60 + Math.floor(new Date().getMinutes()); // Calcula el minut actual (0-47)
+      const minutCalcul = new Date().getHours() * 60 + Math.floor(new Date().getMinutes()); // Calcula el minut actual (0-47)
       let missatge = ""
-      data.Articles.forEach((article) => {
-        const articleData =
-          estocPerLlicencia[data.Llicencia][article.CodiArticle];
-        if (articleData) {
-          // Update the units sold and handle floating-point arithmetic correctly
-          const quantitat = parseFloat(article.Quantitat);
-          const unitatsVenudes = parseFloat(articleData.unitatsVenudes);
-          articleData.unitatsVenudes = parseFloat((quantitat + unitatsVenudes).toFixed(3))
-
-          if (articleData.tipus === "Encarrecs") {
-            articleData.estoc =
-              parseFloat(articleData.unitatsServides) -
-              parseFloat(articleData.unitatsVenudes) -
-              parseFloat(articleData.unitatsEncarregades);
-            articleData.ultimaActualitzacio = new Date().toISOString();
-
-            client.publish(
-              `${process.env.MQTT_CLIENT_ID}/Estock/${data.Llicencia}`,
-              JSON.stringify({
-                Llicencia: data.Llicencia,
-                CodiArticle: article.CodiArticle,
-                EstocActualitzat: articleData.estoc,
-                FontSize: 12,
-                FontColor: "Black",
-              })
-            );
-          }
-        }
+      data.Articles.forEach((article) => {  // actualitzem les dades a l estructura d articles controlats
+        ImportTotalTicket+= parseFloat(article.import);
+        if (estocPerLlicencia[data.Llicencia][article.codiArticle])
+          estocPerLlicencia[data.Llicencia][article.codiArticle].unitatsVenudes = parseFloat((parseFloat(article.Quantitat) + parseFloat(articleData.unitatsVenudes)).toFixed(3))
       });
 
-      // The following part assumes estocPerLlicencia[data.Llicencia] is an array, which might not be the case
-      Object.values(estocPerLlicencia[data.Llicencia]).forEach((controlat) => {
-if (process.env.NODE_ENV === "Dsv") console.log(controlat);
-        if (controlat.tipus === "Compromisos") {
-          // Actualitzem compromis
+      Object.values(estocPerLlicencia[data.Llicencia]).forEach((controlat) => {  // Revisem els indicadors 
+        if (process.env.NODE_ENV === "Dsv") console.log(controlat);
+        missatge = controlat.ultimMissatge; // Creem el missatge
+        if (controlat.tipus === "Encarrecs") {
+          articleData.estoc =
+            parseFloat(controlat.unitatsServides) -
+            parseFloat(controlat.unitatsVenudes) -
+            parseFloat(controlat.unitatsEncarregades);
+          controlat.ultimaActualitzacio = new Date().toISOString();
+          missatge = JSON.stringify({
+              Llicencia: data.Llicencia,
+              codiArticle: article.codiArticle,
+              EstocActualitzat: controlat.estoc,
+              FontSize: 12,
+              FontColor: "Black",
+            })
+        } else if (controlat.tipus === "Compromisos") {
           controlat.historic.forEach((historic) => {
-            // caldria afinar al minut !!!
-            if (
-              historic.Minut > controlat.minutCalcul &&
-              minutCalcul > controlat.minutCalcul
-            ) {
-              controlat.unitatsVenudes7d =
-              parseFloat(controlat.unitatsVenudes7d) + parseFloat(historic.SumaPast);
+            if (historic.Minut > controlat.minutCalcul && minutCalcul > controlat.minutCalcul) {
+              controlat.unitatsVenudes7d = parseFloat(controlat.unitatsVenudes7d) + parseFloat(historic.SumaPast);
               controlat.minutCalcul = historic.Minut;
             }
           });
 
-          missatge = ""; // Creem el missatge
-          if (
-            parseFloat(controlat.unitatsVenudes) <
-            parseFloat(controlat.objectiu)
-          )
-            missatge =
-              parseFloat(controlat.unitatsVenudes) >
-              parseFloat(controlat.objectiu)
-                ? "😄"
-                : "💩";
+          missatge = parseFloat(controlat.unitatsVenudes) > parseFloat(controlat.objectiu) ? "😄": "💩";
           let dif = Math.floor(controlat.unitatsVenudes - controlat.objectiu);
-
-          /*            let carasInc=['🤑','😃','😄','😒','😥','😳','😟','💩','😠','😡','🤬','🤢'];
-                      if (dif >= 2) missatge = carasInc[0]; // Molt bé, supera l'objectiu per 2 o més unitats
-                       else if (dif === 1) missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
-                        else if (dif === 0) missatge = carasInc[2]; 
-                         else if (dif === -1) missatge = carasInc[3]; 
-                          else if (dif === -2) missatge = carasInc[4]; 
-                           else if (dif === -3) missatge = carasInc[5]; 
-                            else if (dif === -4) missatge = carasInc[6]; 
-                             else if (dif === -5) missatge = carasInc[7]; 
-                              else if (dif === -6) missatge = carasInc[8]; 
-                               else if (dif === -7) missatge = carasInc[9]; 
-                                else if (dif === -8) missatge = carasInc[10]; 
-                                 else if (dif === -9) missatge = carasInc[11]; 
-          */
           let carasInc = ["", "😃", "🍒", "🤢"];
-if (process.env.NODE_ENV === "Dsv") console.log('Diferencia : ',dif);
           if (dif >= 2) missatge = carasInc[0];
-          // Molt bé, supera l'objectiu per 2 o més unitats
-          else if (dif === 1)
-            missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
-          else if (dif === 0) missatge = carasInc[1];
+          else if (dif === 1)  missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
+          else if (dif === 0)  missatge = carasInc[1];
           else if (dif === -1) missatge = carasInc[2];
           else if (dif === -2) missatge = carasInc[2] + carasInc[2];
-          else if (dif === -3)
-            missatge = carasInc[2] + carasInc[2] + carasInc[2];
-          else if (dif === -4)
-            missatge = carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2];
-          else if (dif === -5)
-            missatge =
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2];
-          else if (dif === -6)
-            missatge =
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2] +
-              carasInc[2];
+          else if (dif === -3) missatge = carasInc[2] + carasInc[2] + carasInc[2];
+          else if (dif === -4) missatge = carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2];
+          else if (dif === -5) missatge = carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2];
+          else if (dif === -6) missatge = carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2] + carasInc[2];
           else if (dif <= -6) missatge = carasInc[3];
           else if (dif >= 1) missatge = "";
 
-          if (controlat.ultimMissatge !== missatge) {
-            controlat.ultimMissatge = missatge;
-            client.publish(
-              `${process.env.MQTT_CLIENT_ID}/Estock/${data.Llicencia}`,
-              JSON.stringify({
-                Llicencia: data.Llicencia,
-                CodiArticle: controlat.articleCodi,
-                EstocActualitzat: controlat.ultimMissatge,
-                FontSize: 20,
-                FontColor: "Black",
-              })
-            );
-          }
+          missatge = JSON.stringify({Llicencia: data.Llicencia,
+            codiArticle: controlat.articleCodi,
+                                     EstocActualitzat: missatge,
+                                     FontSize: 20,
+                                     FontColor: "Black",
+                                   })
         } else if (controlat.tipus === "IndicadorVenut") {
+          controlat.importVenut = parseFloat(controlat.importVenut) + parseFloat(ImportTotalTicket); 
           controlat.historic.forEach((historic) => {
-            // caldria afinar al minut !!!
-            if (
-              historic.Minut > controlat.minutCalcul &&
-              minutCalcul > controlat.minutCalcul
-            ) {
-              controlat.unitatsVenudes7d =
-                controlat.unitatsVenudes7d + parseFloat(historic.SumaPast);
+            if (historic.Minut > controlat.minutCalcul && minutCalcul > controlat.minutCalcul) {
+              controlat.importVenut7d = parseFloat(controlat.importVenut7d) + parseFloat(historic.SumaPast);
               controlat.minutCalcul = historic.Minut;
             }
           });
-if (process.env.NODE_ENV === "Dsv") console.log('Venut ', controlat.unitatsVenudes, 'Venut 7d ', controlat.unitatsVenudes7d);
-          missatge = ""; // Creem el missatge
-          if (
-            parseFloat(controlat.unitatsVenudes) <
-            parseFloat(controlat.unitatsVenudes7d)
-          )
-            missatge =
-              parseFloat(controlat.unitatsVenudes) >
-              parseFloat(controlat.unitatsVenudes7d)
-                ? "😄"
-                : "💩";
-          let dif = Math.floor(
-            controlat.unitatsVenudes - controlat.unitatsVenudes7d
-          );
-
-          let carasInc = [
-            "🤑",
-            "😃",
-            "😄",
-            "😒",
-            "😥",
-            "😳",
-            "😟",
-            "💩",
-            "😠",
-            "😡",
-            "🤬",
-            "🤢",
-          ];
-          if (dif >= 2) missatge = carasInc[0];
-          // Molt bé, supera l'objectiu per 2 o més unitats
-          else if (dif === 1)
-            missatge = carasInc[1]; // Bé, supera l'objectiu per 1 unitat
-          else if (dif === 0) missatge = carasInc[2];
-          else if (dif === -1) missatge = carasInc[3];
-          else if (dif === -2) missatge = carasInc[4];
-          else if (dif === -3) missatge = carasInc[5];
-          else if (dif === -4) missatge = carasInc[6];
-          else if (dif === -5) missatge = carasInc[7];
-          else if (dif === -6) missatge = carasInc[8];
-          else if (dif === -7) missatge = carasInc[9];
-          else if (dif === -8) missatge = carasInc[10];
-          else if (dif === -9) missatge = carasInc[11];
-
-          if (controlat.ultimMissatge !== missatge) {
-            controlat.ultimMissatge = missatge;
-            client.publish(
-              `${process.env.MQTT_CLIENT_ID}/Estock/${data.Llicencia}`,
-              JSON.stringify({
-                Llicencia: data.Llicencia,
-                CodiArticle: "IndicadorPos1",
-                EstocActualitzat: controlat.ultimMissatge,
-                FontSize: 20,
-                FontColor: "Black",
-              })
-            );
-          }
+          if (process.env.NODE_ENV === "Dsv") console.log('Venut ', controlat.importVenut, 'Venut 7d ', controlat.importVenut7d);
+          let dif = Math.floor(controlat.importVenut/controlat.importVenut7d * 100 )  -100 ;
+          let carasInc = ["🤑","😃","😄","😒","😥","😳","😟","💩","😠","😡","🤬","🤢"];
+          missatge = carasInc[5];
+          if      (dif >20  )  missatge = carasInc[0];
+          else if (dif >10  )  missatge = carasInc[1];
+          else if (dif >0   )  missatge = carasInc[2];
+          else if (dif > -5 )  missatge = carasInc[3];
+          else if (dif > -10)  missatge = carasInc[4];
+          else if (dif > -15)  missatge = carasInc[5];
+          else if (dif > -18)  missatge = carasInc[6];
+          else if (dif > -20)  missatge = carasInc[7];
+          else if (dif > -22)  missatge = carasInc[8];
+          else if (dif > -24)  missatge = carasInc[9];
+          else if (dif > -25)  missatge = carasInc[10];
+          else if (dif > -30)  missatge = carasInc[11];
+          else if (dif > -50)  missatge = carasInc[12];
+          missatge = JSON.stringify({
+            Llicencia: data.Llicencia,
+            codiArticle: controlat.codiArticle,
+            EstocActualitzat: missatge,
+            FontSize: 12,
+            FontColor: "Black",
+          })
         }
+    if (controlat.ultimMissatge !== missatge) {
+      controlat.ultimMissatge = missatge;
+      client.publish(
+        `${process.env.MQTT_CLIENT_ID}/Estock/${data.Llicencia}`,
+        JSON.stringify({
+          Llicencia: data.Llicencia,
+          codiArticle: controlat.codiArticle,
+          EstocActualitzat: controlat.ultimMissatge,
+          FontSize: 20,
+          FontColor: "Black",
+        })
+      );
+    }        
 if (process.env.NODE_ENV === "Dsv") console.log(missatge);        
       });
     } catch (error) {
