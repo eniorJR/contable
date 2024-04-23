@@ -320,7 +320,7 @@ async function initVectorLlicencia(Llicencia, Empresa) {
 
         if (estocPerLlicencia[Llicencia][tipus]) {
           historicArrayNew    = estocPerLlicencia[Llicencia][tipus].historic;
-          importVenutVenutNew = estocPerLlicencia[Llicencia][tipus].importVenut + parseFloat(importVenutNew);
+          importVenutNew = estocPerLlicencia[Llicencia][tipus].importVenut + parseFloat(importVenutNew);
           importVenut7dNew    = estocPerLlicencia[Llicencia][tipus].importVenut7d + parseFloat(importVenut7dNew);
         }
 
@@ -408,35 +408,38 @@ async function revisarEstoc(data) {
                                      FontColor: "Black",
                                    })
         } else if (controlat.tipus === "IndicadorVenut") {
+          if(!ImportTotalTicket) ImportTotalTicket=0;
           controlat.importVenut = parseFloat(controlat.importVenut) + parseFloat(ImportTotalTicket); 
           controlat.historic.forEach((historic) => {
             if (historic.Minut > controlat.minutCalcul && minutCalcul > controlat.minutCalcul) {
               controlat.importVenut7d = parseFloat(controlat.importVenut7d) + parseFloat(historic.SumaPast);
+              controlat.importVenut = parseFloat(controlat.importVenut) + parseFloat(historic.SumaAvui);
               controlat.minutCalcul = historic.Minut;
             }
           });
+
           if (process.env.NODE_ENV === "Dsv") console.log('Venut ', controlat.importVenut, 'Venut 7d ', controlat.importVenut7d);
           let dif = Math.floor(controlat.importVenut/controlat.importVenut7d * 100 )  -100 ;
           let carasInc = ["🤑","😃","😄","😒","😥","😳","😟","💩","😠","😡","🤬","🤢"];
-          missatge = carasInc[5];
-          if      (dif >20  )  missatge = carasInc[0];
-          else if (dif >10  )  missatge = carasInc[1];
-          else if (dif >0   )  missatge = carasInc[2];
-          else if (dif > -5 )  missatge = carasInc[3];
-          else if (dif > -10)  missatge = carasInc[4];
-          else if (dif > -15)  missatge = carasInc[5];
-          else if (dif > -18)  missatge = carasInc[6];
-          else if (dif > -20)  missatge = carasInc[7];
-          else if (dif > -22)  missatge = carasInc[8];
-          else if (dif > -24)  missatge = carasInc[9];
-          else if (dif > -25)  missatge = carasInc[10];
-          else if (dif > -30)  missatge = carasInc[11];
-          else if (dif > -50)  missatge = carasInc[12];
+          missatge = Math.round(controlat.importVenut) + ' ' + carasInc[5];
+          if      (dif >20  )  missatge = Math.round(controlat.importVenut) + ' ' + carasInc[0];
+          else if (dif >10  )  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[1];
+          else if (dif >0   )  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[2];
+          else if (dif > -5 )  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[3];
+          else if (dif > -10)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[4];
+          else if (dif > -15)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[5];
+          else if (dif > -18)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[6];
+          else if (dif > -20)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[7];
+          else if (dif > -22)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[8];
+          else if (dif > -24)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[9];
+          else if (dif > -25)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[10];
+          else if (dif > -30)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[11];
+          else if (dif > -50)  missatge= Math.round(controlat.importVenut) + ' ' + carasInc[12];
           missatge = JSON.stringify({
             Llicencia: data.Llicencia,
             codiArticle: controlat.codiArticle,
             EstocActualitzat: missatge,
-            FontSize: 12,
+            FontSize: 17,
             FontColor: "Black",
           })
         }
