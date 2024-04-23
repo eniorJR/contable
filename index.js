@@ -3,6 +3,7 @@ const sql = require("mssql");
 const moment = require("moment");
 require("dotenv").config();
 
+
 // Configuració de la connexió a la base de dades MSSQL
 const dbConfig = {
   user: process.env.DB_USER,
